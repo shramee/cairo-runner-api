@@ -1,50 +1,70 @@
-use axum::{extract::Query, http::StatusCode, response::Json, routing::get, Router};
+use axum::{
+    extract::Json as ExtractJson,,
+    response::Json,
+    routing::{get, post},
+    Router,
+};
 use serde::{Deserialize, Serialize};
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, Level};
 
-#[derive(Serialize)]
-struct CompileResponse {
-    message: String,
-    version: String,
-    server_info: ServerInfo,
-    timestamp: String,
-}
-
-#[derive(Serialize)]
-struct ServerInfo {
-    name: String,
-    description: String,
-    capabilities: Vec<String>,
+#[derive(Deserialize, Debug)]
+enum CompilationMode {
+    Compile,
+    Test,
 }
 
 #[derive(Deserialize)]
-struct CompileQuery {
-    name: Option<String>,
+struct CompileRequest {
+    cairo_code: String,
+    mode: CompilationMode,
+    starknet: bool,
+}
+
+#[derive(Serialize)]
+struct CompileResponse {
+    message: String,
+    success: bool,
+    code_length: usize,
+    version: String,
+    timestamp: String,
 }
 
 async fn compile_handler(
-    Query(params): Query<CompileQuery>,
+    ExtractJson(request): ExtractJson<CompileRequest>,
 ) -> Result<Json<CompileResponse>, StatusCode> {
-    let name = params.name.unwrap_or_else(|| "World".to_string());
-
-    let response = CompileResponse {
-        message: format!("Compile, {}!", name),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        server_info: ServerInfo {
-            name: "Cairo Compilation API".to_string(),
-            description: "High-performance server-side Cairo compilation service".to_string(),
-            capabilities: vec![
-                "cairo_compilation".to_string(),
-                "async_processing".to_string(),
-                "result_caching".to_string(),
-            ],
-        },
-        timestamp: chrono::Utc::now().to_rfc3339(),
+    let code_length = request.cairo_code.len();
+    let code_preview = if request.cairo_code.len() > 100 {
+        format!("{}...", &request.cairo_code[..100])
+    } else {
+        request.cairo_code.clone()
     };
 
-    info!("Compile endpoint called with name: {}", name);
+    info!("Compile endpoint called");
+    info!("Cairo code length: {} characters", code_length);
+    info!("Cairo code preview: {}", code_preview);
+
+    // Log the full code for debugging (be careful in production!)
+    if request.cairo_code.len() < 1000 {
+        info!("Full Cairo code:\n{}", request.cairo_code);
+    } else {
+        info!("Cairo code too long to log in full ({} chars)", code_length);
+    }
+
+        info!(
+            "Compilation op, mode={:?}, starknet={:?}",
+            request.mode, request.starknet
+        );
+
+    let response = CompileResponse {
+        message: "Cairo code received for compilation".to_string(),
+        code_length,
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        success: true,
+    };
+
     Ok(Json(response))
 }
 
@@ -68,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Build the application with middleware
     let app = Router::new()
-        .route("/compile", get(compile_handler))
+        .route("/compile", post(compile_handler))
         .route("/health", get(health_handler))
         .layer(
             ServiceBuilder::new()
