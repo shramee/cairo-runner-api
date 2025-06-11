@@ -1,12 +1,11 @@
 use axum::{extract::Query, http::StatusCode, response::Json, routing::get, Router};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, Level};
 
 #[derive(Serialize)]
-struct HelloResponse {
+struct CompileResponse {
     message: String,
     version: String,
     server_info: ServerInfo,
@@ -21,17 +20,17 @@ struct ServerInfo {
 }
 
 #[derive(Deserialize)]
-struct HelloQuery {
+struct CompileQuery {
     name: Option<String>,
 }
 
-async fn hello_handler(
-    Query(params): Query<HelloQuery>,
-) -> Result<Json<HelloResponse>, StatusCode> {
+async fn compile_handler(
+    Query(params): Query<CompileQuery>,
+) -> Result<Json<CompileResponse>, StatusCode> {
     let name = params.name.unwrap_or_else(|| "World".to_string());
 
-    let response = HelloResponse {
-        message: format!("Hello, {}!", name),
+    let response = CompileResponse {
+        message: format!("Compile, {}!", name),
         version: env!("CARGO_PKG_VERSION").to_string(),
         server_info: ServerInfo {
             name: "Cairo Compilation API".to_string(),
@@ -45,7 +44,7 @@ async fn hello_handler(
         timestamp: chrono::Utc::now().to_rfc3339(),
     };
 
-    info!("Hello endpoint called with name: {}", name);
+    info!("Compile endpoint called with name: {}", name);
     Ok(Json(response))
 }
 
@@ -69,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Build the application with middleware
     let app = Router::new()
-        .route("/hello", get(hello_handler))
+        .route("/compile", get(compile_handler))
         .route("/health", get(health_handler))
         .layer(
             ServiceBuilder::new()
