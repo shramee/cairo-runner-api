@@ -1,4 +1,7 @@
-mod entrypoints;
+mod entrypoints {
+    pub mod compile;
+    pub mod health;
+}
 
 use axum::{
     routing::{get, post},
@@ -8,7 +11,7 @@ use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, Level};
 
-use crate::entrypoints::{compile_handler, health_handler};
+use crate::entrypoints::{compile::compile_handler, health::health_handler};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
