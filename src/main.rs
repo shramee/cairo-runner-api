@@ -1,3 +1,5 @@
+mod runner;
+
 mod entrypoints {
     pub mod compile;
     pub mod health;
