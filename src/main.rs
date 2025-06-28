@@ -3,6 +3,7 @@ mod runner;
 mod entrypoints {
     pub mod compile;
     pub mod health;
+    pub mod test;
 }
 
 use axum::{
@@ -11,14 +12,13 @@ use axum::{
 };
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing::{info, Level};
+use tracing::info;
 
-use crate::entrypoints::{compile::compile_handler, health::health_handler};
+use crate::entrypoints::{compile::run_handler, health::health_handler, test::test_handler};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize tracing
-    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
     info!(
         "Starting Cairo Compilation API v{}",
@@ -27,7 +27,8 @@ async fn main() -> anyhow::Result<()> {
 
     // Build the application with middleware
     let app = Router::new()
-        .route("/compile", post(compile_handler))
+        .route("/run", post(run_handler))
+        .route("/test", post(test_handler))
         .route("/health", get(health_handler))
         .layer(
             ServiceBuilder::new()

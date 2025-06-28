@@ -1,40 +1,30 @@
+use crate::cairo::runner::run_cairo_code;
 use axum::{extract::Json as ExtractJson, http::StatusCode, response::Json};
 use serde::{Deserialize, Serialize};
-use tracing::info;
-
-#[derive(Deserialize, Debug)]
-pub enum CompilationMode {
-    Compile,
-    Test,
-}
 
 #[derive(Deserialize)]
-pub struct CompileRequest {
+pub struct RunRequest {
     cairo_code: String,
-    mode: Option<CompilationMode>,
-    starknet: Option<bool>,
 }
 
 #[derive(Serialize)]
-pub struct CompileResponse {
+pub struct RunResponse {
     message: String,
     success: bool,
 }
 
-pub async fn compile_handler(
-    ExtractJson(request): ExtractJson<CompileRequest>,
-) -> Result<Json<CompileResponse>, StatusCode> {
-    info!("Compile endpoint called");
-    info!("Cairo code: {}", request.cairo_code);
-
-    info!(
-        "Compilation op, mode={:?}, starknet={:?}",
-        request.mode, request.starknet
-    );
-
-    let response = CompileResponse {
-        message: "Cairo code received for compilation".to_string(),
-        success: true,
+pub async fn run_handler(
+    ExtractJson(request): ExtractJson<RunRequest>,
+) -> Result<Json<RunResponse>, StatusCode> {
+    let response = match run_cairo_code(request.cairo_code) {
+        Ok(message) => RunResponse {
+            message,
+            success: true,
+        },
+        Err(message) => RunResponse {
+            message: format!("{}", message),
+            success: true,
+        },
     };
 
     Ok(Json(response))
