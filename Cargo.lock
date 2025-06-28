@@ -1146,6 +1146,7 @@ dependencies = [
  "cairo-runners",
  "lambda_http",
  "lambda_runtime",
+ "serde_json",
  "tokio",
  "tower-http 0.5.2",
 ]

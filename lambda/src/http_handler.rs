@@ -1,5 +1,6 @@
+use cairo_runner_types::CairoRunRequest;
 use cairo_runners::{main_runner::run_cairo_code, test_runner::run_cairo_tests};
-use lambda_http::{Body, Error, Request, RequestExt, Response};
+use lambda_http::{Body, Error, Request, Response};
 
 fn run_cairo_tests_get_notes(code: String) -> String {
     match run_cairo_tests(code) {
@@ -20,16 +21,19 @@ fn run_cairo_main_get_notes(code: String) -> String {
 /// There are some code example in the following URLs:
 /// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
 pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
+    let body = event.body();
+    let request_data: CairoRunRequest = match body {
+        Body::Text(text) => serde_json::from_str(text)?,
+        Body::Binary(bytes) => serde_json::from_slice(bytes)?,
+        Body::Empty => CairoRunRequest {
+            code: String::new(),
+            test: None,
+        },
+    };
     // Extract some useful information from the request
-    let code = event
-        .query_string_parameters_ref()
-        .and_then(|params| params.first("code"))
-        .unwrap_or_default();
+    let code = request_data.code;
 
-    let result = match event
-        .query_string_parameters_ref()
-        .and_then(|params| params.first("test"))
-    {
+    let result = match request_data.test {
         // run tests if the `test` query parameter is present
         Some(_) => run_cairo_tests_get_notes(code.to_string()),
         // otherwise run the main function
@@ -49,8 +53,8 @@ pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, E
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lambda_http::{Request, RequestExt};
-    use std::collections::HashMap;
+    use lambda_http::Request;
+    use serde_json::json;
 
     #[tokio::test]
     async fn test_empty_code() {
@@ -67,10 +71,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_main_runner() {
-        let mut query_string_parameters: HashMap<String, String> = HashMap::new();
-        query_string_parameters.insert("code".into(), "fn main() -> felt252 {0x25}".into());
+        let code = "fn main() -> felt252 {0x25}";
 
-        let request = Request::default().with_query_string_parameters(query_string_parameters);
+        let request = Request::new(
+            json!({
+                "code": code
+            })
+            .to_string()
+            .into(),
+        );
 
         let response = function_handler(request).await.unwrap();
         assert_eq!(response.status(), 200);
@@ -83,20 +92,21 @@ mod tests {
 
     #[tokio::test]
     async fn test_test_runner() {
-        let mut query_string_parameters: HashMap<String, String> = HashMap::new();
-        query_string_parameters.insert("test".into(), "".into());
-        query_string_parameters.insert(
-            "code".into(),
-            r#"
-    #[test]
-    fn test_pass() {assert(true, 'should pass');}
-    #[test]
-    fn test_fail() {assert(false, 'should fail');}
-    "#
+        let code = r#"
+            #[test]
+            fn test_pass() {assert(true, 'should pass');}
+            #[test]
+            fn test_fail() {assert(false, 'should fail');}
+        "#;
+
+        let request = Request::new(
+            json!({
+                "code": code,
+                "test": true
+            })
+            .to_string()
             .into(),
         );
-
-        let request = Request::default().with_query_string_parameters(query_string_parameters);
 
         let response = function_handler(request).await.unwrap();
         assert_eq!(response.status(), 200);

@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CairoRunRequest {
-    pub cairo_code: String,
+    pub code: String,
+    pub test: Option<bool>,
 }
 
 #[derive(Serialize)]

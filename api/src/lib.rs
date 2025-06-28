@@ -5,7 +5,7 @@ use cairo_runners::{main_runner::run_cairo_code, test_runner::run_cairo_tests};
 pub async fn run_handler(
     ExtractJson(request): ExtractJson<CairoRunRequest>,
 ) -> Result<Json<CairoRunResponse>, StatusCode> {
-    let response = match run_cairo_code(request.cairo_code) {
+    let response = match run_cairo_code(request.code) {
         Ok(message) => CairoRunResponse {
             message,
             success: true,
@@ -22,7 +22,7 @@ pub async fn run_handler(
 pub async fn test_handler(
     ExtractJson(request): ExtractJson<CairoRunRequest>,
 ) -> Result<Json<CairoRunResponse>, StatusCode> {
-    let response = match run_cairo_tests(request.cairo_code.to_string()) {
+    let response = match run_cairo_tests(request.code.to_string()) {
         Ok(message) => CairoRunResponse {
             message: format!("{}", message.notes()),
             success: true,
