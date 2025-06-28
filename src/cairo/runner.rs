@@ -74,7 +74,7 @@ pub fn run_cairo_code(code: String) -> anyhow::Result<String> {
 
     let result = runner
         .run_function_with_starknet_context(
-            runner.find_function("::main").unwrap(),
+            runner.find_function("::main")?,
             vec![],
             None,
             StarknetState::default(),
@@ -115,16 +115,25 @@ pub fn run_cairo_code(code: String) -> anyhow::Result<String> {
     Ok(output)
 }
 
-pub fn run_cairo_code_string_output(code: String) -> String {
-    match run_cairo_code(code) {
-        Ok(output) => output,
-        Err(e) => format!("Error: {}", e),
-    }
-}
-
 #[cfg(test)]
-mod test_runner {
+mod runner_tests {
     use super::*;
+
+    pub fn run_cairo_code_string_output(code: String) -> String {
+        match run_cairo_code(code) {
+            Ok(output) => output,
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_cairo_code_success1() {
+        let code = r#"
+fn main(){// this is some Cairo code
+}"#;
+        let output = run_cairo_code_string_output(code.to_string());
+        assert!(output.contains("Run completed successfully, returning"));
+    }
 
     #[test]
     fn test_cairo_code_success() {
