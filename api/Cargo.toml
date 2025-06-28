@@ -5,6 +5,7 @@ edition = "2024"
 description = "Runner executable for the Cairo programming language"
 
 [dependencies]
+cairo-runner-types = { path = "../types" }
 cairo-runners = { path = "../runners" }
 axum = "0.8"
 tokio = { version = "1.45", features = ["full"] }
