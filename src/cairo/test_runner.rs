@@ -1,5 +1,5 @@
 use cairo_lang_compiler::{db::RootDatabase, diagnostics::DiagnosticsReporter};
-use cairo_lang_runner::{RunResultValue, SierraCasmRunner, StarknetExecutionResources};
+use cairo_lang_runner::{RunResultValue, SierraCasmRunner};
 use cairo_lang_sierra::program::Program;
 use cairo_lang_test_plugin::{
     compile_test_prepared_db,
@@ -10,7 +10,7 @@ use cairo_lang_test_runner::{RunProfilerConfig, TestRunConfig};
 
 use std::sync::Mutex;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use cairo_lang_runner::ProfilingInfoCollectionConfig;
 use cairo_lang_starknet::{contract::ContractInfo, starknet_plugin_suite};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -19,10 +19,12 @@ use starknet_types_core::felt::Felt as Felt252;
 
 use crate::cairo::runner::setup_input_string_project;
 
+#[derive(Debug)]
 pub struct TestsSummary {
     passed: Vec<String>,
     failed: Vec<String>,
     failed_run_results: Vec<RunResultValue>,
+    notes: String,
 }
 enum TestStatus {
     Success,
@@ -35,8 +37,8 @@ struct TestResult {
     status: TestStatus,
     /// The gas usage of the run if relevant.
     gas_usage: Option<i64>,
-    /// The used resources of the run.
-    used_resources: StarknetExecutionResources,
+    // /// The used resources of the run.
+    // used_resources: StarknetExecutionResources,
     // /// The profiling info of the run, if requested.
     // profiling_info: Option<ProfilingInfo>,
 }
@@ -94,8 +96,6 @@ pub fn run_cairo_tests(code: String) -> anyhow::Result<TestsSummary> {
 fn update_summary(
     wrapped_summary: &Mutex<std::prelude::v1::Result<TestsSummary, anyhow::Error>>,
     test_result: std::prelude::v1::Result<(String, Option<TestResult>), anyhow::Error>,
-    sierra_program: &Program,
-    print_resource_usage: bool,
 ) {
     let mut wrapped_summary = wrapped_summary.lock().unwrap();
     if wrapped_summary.is_err() {
@@ -123,9 +123,9 @@ fn update_summary(
         (&mut empty_tests, "ignored", None)
     };
     if let Some(gas_usage) = gas_usage {
-        println!("test {name} ... {status_str} (gas usage est.: {gas_usage})");
+        summary.notes += &format!("\ntest {name} ... {status_str} (gas usage est.: {gas_usage})");
     } else {
-        println!("test {name} ... {status_str}");
+        summary.notes += &format!("\ntest {name} ... {status_str}");
     }
 
     res_type.push(name);
@@ -151,11 +151,12 @@ pub fn run_tests(
     )
     .with_context(|| "Failed setting up runner.")?;
     let suffix = if named_tests.len() != 1 { "s" } else { "" };
-    println!("running {} test{}", named_tests.len(), suffix);
+    let notes = format!("running {} test{}", named_tests.len(), suffix);
     let wrapped_summary = Mutex::new(Ok(TestsSummary {
         passed: vec![],
         failed: vec![],
         failed_run_results: vec![],
+        notes,
     }));
 
     // Run in parallel if possible. If running with db, parallelism is impossible.
@@ -163,12 +164,7 @@ pub fn run_tests(
         .into_iter()
         .map(move |(name, test)| run_single_test(test, name, &runner))
         .for_each(|test_result| {
-            update_summary(
-                &wrapped_summary,
-                test_result,
-                &sierra_program,
-                config.print_resource_usage,
-            );
+            update_summary(&wrapped_summary, test_result);
         });
 
     wrapped_summary.into_inner().unwrap()
@@ -205,8 +201,10 @@ fn run_single_test(
                     },
                 },
             },
-            gas_usage: Some(result.gas_counter.unwrap().to_bigint().to_u64_digits().1[0] as i64),
-            used_resources: result.used_resources,
+            gas_usage: result
+                .gas_counter
+                .map(|f| f.to_bigint().to_u64_digits().1[0] as i64),
+            // used_resources: result.used_resources,
             // profiling_info: result.profiling_info,
         }),
     ))
