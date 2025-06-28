@@ -211,60 +211,98 @@ fn run_single_test(
 }
 
 #[cfg(test)]
-mod test_runner {
+mod test_runner_tests {
     use super::*;
 
-    pub fn run_cairo_code_string_output(code: String) -> String {
-        match run_cairo_code(code) {
-            Ok(output) => output,
-            Err(e) => format!("Error: {}", e),
+    #[test]
+    fn fail_compilation() {
+        let code = r#"fn main(){}{"#;
+
+        match run_cairo_tests(code.to_string()) {
+            Ok(_) => {
+                panic!("Error compilation should fail")
+            }
+            Err(e) => {
+                assert!(e.to_string().contains("Compilation failed"));
+            }
         }
     }
 
     #[test]
-    fn test_cairo_code_success1() {
+    fn no_tests() {
         let code = r#"
 fn main(){// this is some Cairo code
 }"#;
-        let output = run_cairo_code_string_output(code.to_string());
-        assert!(output.contains("Run completed successfully, returning"));
+
+        match run_cairo_tests(code.to_string()) {
+            Ok(output) => {
+                assert!(
+                    output.failed.is_empty()
+                        && output.passed.is_empty()
+                        && output.failed_run_results.is_empty()
+                );
+            }
+            Err(e) => panic!("Error: {}", e),
+        }
     }
 
     #[test]
-    fn test_cairo_code_success() {
+    fn diagnostics_test() {
         let code = r#"
-            fn main() -> felt252 {
-                return 42;
+    #[test]
+    fn test_failing() {
+        assert(false, "fail diagnostics");
+    }
+    "#;
+        match run_cairo_tests(code.to_string()) {
+            Ok(_) => panic!("Error: test tunner should fail with diagnostics"),
+            Err(e) => {
+                let e = e.to_string();
+                assert!(e.contains("Mismatched types. The type `core::felt252` cannot be created from a string literal."));
+                assert!(e
+                    .to_string()
+                    .contains("assert(false, \"fail diagnostics\");"));
+                assert!(e.contains("  ^^^^^^^^^^^^^^^^^")); // some sorta pointer
             }
-        "#;
-        let output = run_cairo_code_string_output(code.to_string());
-        assert!(output.contains("Run completed successfully, returning"));
+        }
     }
 
     #[test]
-    fn test_cairo_code_compile_error() {
+    fn test_panic() {
         let code = r#"
-            fn main() -> felt252 {
-                4 + 5;
+    #[test]
+    fn test_failing() {
+    	assert(false, 'should fail');
+    }
+    "#;
+        match run_cairo_tests(code.to_string()) {
+            Ok(output) => {
+                assert!(output.passed.is_empty());
+                assert!(output.failed.len() == 1);
+                assert!(output.failed_run_results.len() == 1);
+                assert!(output.notes.contains("test lib::test_failing ... fail"));
             }
-        "#;
-        let output = match run_cairo_code(code.to_string()) {
-            Ok(_) => panic!("output should have error"),
-            Err(e) => format!("{}", e),
-        };
-        println!("\n\n{}\n\n", output);
-        assert!(output.contains("Unexpected return type."));
+            Err(e) => panic!("Error: {}", e),
+        }
     }
 
     #[test]
-    fn test_cairo_code_panic() {
+    fn test_should_panic() {
         let code = r#"
-            fn main() {
-                panic!("good_error_has_occurred");
+    #[test]
+    #[should_panic]
+    fn test_should_panic() {
+    	assert(false, 'panics');
+    }
+    "#;
+        match run_cairo_tests(code.to_string()) {
+            Ok(output) => {
+                assert!(output.passed.len() == 1);
+                assert!(output.failed.is_empty());
+                assert!(output.failed_run_results.is_empty());
+                assert!(output.notes.contains("test lib::test_should_panic ... ok"));
             }
-        "#;
-        let output = run_cairo_code_string_output(code.to_string());
-        assert!(output.contains("Run panicked with"));
-        assert!(output.contains("good_error_has_occurred"));
+            Err(e) => panic!("Error: {}", e),
+        }
     }
 }
