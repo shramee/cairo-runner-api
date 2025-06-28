@@ -1,5 +1,3 @@
-pub mod endpoints;
-
 use axum::{
     routing::{get, post},
     Json, Router,
@@ -8,7 +6,7 @@ use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
-use endpoints::{run_handler, test_handler};
+use cairo_runner_api::{run_handler, test_handler};
 
 pub async fn health_handler() -> Json<serde_json::Value> {
     Json(serde_json::json!({
