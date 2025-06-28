@@ -26,6 +26,22 @@ pub struct TestsSummary {
     failed_run_results: Vec<RunResultValue>,
     notes: String,
 }
+
+impl TestsSummary {
+    pub fn passed(&self) -> &[String] {
+        &self.passed
+    }
+    pub fn failed(&self) -> &[String] {
+        &self.failed
+    }
+    pub fn failed_run_results(&self) -> &[RunResultValue] {
+        &self.failed_run_results
+    }
+    pub fn notes(&self) -> &str {
+        &self.notes
+    }
+}
+
 enum TestStatus {
     Success,
     Fail(RunResultValue),

@@ -162,7 +162,6 @@ fn main(){// this is some Cairo code
             Ok(_) => panic!("output should have error"),
             Err(e) => format!("{}", e),
         };
-        println!("\n\n{}\n\n", output);
         assert!(output.contains("Unexpected return type."));
     }
 

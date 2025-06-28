@@ -1,4 +1,4 @@
-use crate::cairo::runner::run_cairo_code;
+use crate::cairo::test_runner::run_cairo_tests;
 use axum::{extract::Json as ExtractJson, http::StatusCode, response::Json};
 use serde::{Deserialize, Serialize};
 
@@ -16,9 +16,9 @@ pub struct TestResponse {
 pub async fn test_handler(
     ExtractJson(request): ExtractJson<TestRequest>,
 ) -> Result<Json<TestResponse>, StatusCode> {
-    let response = match run_cairo_code(request.cairo_code) {
+    let response = match run_cairo_tests(request.cairo_code.to_string()) {
         Ok(message) => TestResponse {
-            message,
+            message: format!("{}", message.notes()),
             success: true,
         },
         Err(message) => TestResponse {
