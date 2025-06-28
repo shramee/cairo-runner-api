@@ -303,6 +303,25 @@ fn main(){// this is some Cairo code
     }
 
     #[test]
+    fn test_pass() {
+        let code = r#"
+    #[test]
+    fn test_pass() {
+    	assert(true, 'should pass');
+    }
+    "#;
+        match run_cairo_tests(code.to_string()) {
+            Ok(output) => {
+                assert!(output.passed.is_empty());
+                assert!(output.failed.len() == 1);
+                assert!(output.failed_run_results.len() == 1);
+                assert!(output.notes.contains("test lib::test_failing ... fail"));
+            }
+            Err(e) => panic!("Error: {}", e),
+        }
+    }
+
+    #[test]
     fn test_should_panic() {
         let code = r#"
     #[test]
