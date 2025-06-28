@@ -41,7 +41,7 @@ struct TestResult {
     // profiling_info: Option<ProfilingInfo>,
 }
 
-pub fn run_cairo_tests(code: String) -> anyhow::Result<Option<TestsSummary>> {
+pub fn run_cairo_tests(code: String) -> anyhow::Result<TestsSummary> {
     let mut db_builder = RootDatabase::builder();
     db_builder.detect_corelib();
     db_builder.with_default_plugin_suite(test_plugin_suite());
@@ -82,17 +82,12 @@ pub fn run_cairo_tests(code: String) -> anyhow::Result<Option<TestsSummary>> {
         print_resource_usage: false,
     };
 
-    let TestsSummary {
-        passed,
-        failed,
-        failed_run_results,
-    } = run_tests(
+    Ok(run_tests(
         compiled.metadata.named_tests,
         compiled.sierra_program.program,
         compiled.metadata.contracts_info,
         &config,
-    )?;
-    todo!()
+    )?)
 }
 
 /// Updates the test summary with the given test result.
