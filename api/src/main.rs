@@ -1,16 +1,22 @@
-pub mod compile;
-pub mod health;
-pub mod test;
+pub mod endpoints;
 
 use axum::{
     routing::{get, post},
-    Router,
+    Json, Router,
 };
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
-use {compile::run_handler, health::health_handler, test::test_handler};
+use endpoints::{run_handler, test_handler};
+
+pub async fn health_handler() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "status": "healthy",
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "version": env!("CARGO_PKG_VERSION")
+    }))
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
