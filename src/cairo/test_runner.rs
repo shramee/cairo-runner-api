@@ -50,7 +50,9 @@ pub fn run_cairo_tests(code: String) -> anyhow::Result<Option<TestsSummary>> {
 
     let crate_id = setup_input_string_project(db, code)?;
 
-    let compiled = compile_test_prepared_db(
+    let mut diagnostics = String::new();
+
+    let compiled = match compile_test_prepared_db(
         db,
         TestsCompilationConfig {
             starknet: true,
@@ -61,8 +63,15 @@ pub fn run_cairo_tests(code: String) -> anyhow::Result<Option<TestsSummary>> {
             executable_crate_ids: None,
         },
         vec![crate_id],
-        DiagnosticsReporter::stderr().with_crates(&[crate_id]),
-    )?;
+        DiagnosticsReporter::callback(|diagnostic| {
+            diagnostics += format!("{}\n", diagnostic).as_str()
+        }),
+    ) {
+        Ok(compiled) => compiled,
+        Err(err) => {
+            bail!("{err}\n\n{diagnostics}")
+        }
+    };
 
     let config = TestRunConfig {
         filter: "".into(),
