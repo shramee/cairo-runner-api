@@ -1,4 +1,7 @@
-mod runner;
+pub mod cairo {
+    pub mod runner;
+    pub mod test_runner;
+}
 
 mod entrypoints {
     pub mod compile;

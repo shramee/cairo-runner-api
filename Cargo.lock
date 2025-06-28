@@ -996,6 +996,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-lang-test-plugin"
+version = "2.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f8317897b1a21390882e7584b9899ccc6b506bb9e67826ed1eaab83a2b4f104"
+dependencies = [
+ "anyhow",
+ "cairo-lang-compiler",
+ "cairo-lang-debug",
+ "cairo-lang-defs",
+ "cairo-lang-filesystem",
+ "cairo-lang-lowering",
+ "cairo-lang-semantic",
+ "cairo-lang-sierra",
+ "cairo-lang-sierra-generator",
+ "cairo-lang-starknet",
+ "cairo-lang-starknet-classes",
+ "cairo-lang-syntax",
+ "cairo-lang-utils",
+ "indoc",
+ "itertools 0.14.0",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "starknet-types-core",
+]
+
+[[package]]
+name = "cairo-lang-test-runner"
+version = "2.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d8a145f1fd397a4ed9667c2ffafdaf6f18e2277f00df33e7319f7221213dc05"
+dependencies = [
+ "anyhow",
+ "cairo-lang-compiler",
+ "cairo-lang-filesystem",
+ "cairo-lang-runner",
+ "cairo-lang-sierra",
+ "cairo-lang-sierra-generator",
+ "cairo-lang-sierra-to-casm",
+ "cairo-lang-starknet",
+ "cairo-lang-test-plugin",
+ "cairo-lang-utils",
+ "colored",
+ "itertools 0.14.0",
+ "num-traits",
+ "rayon",
+ "starknet-types-core",
+]
+
+[[package]]
 name = "cairo-lang-test-utils"
 version = "2.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1036,13 +1086,18 @@ dependencies = [
  "cairo-lang-formatter",
  "cairo-lang-runner",
  "cairo-lang-semantic",
+ "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
+ "cairo-lang-sierra-to-casm",
  "cairo-lang-starknet",
+ "cairo-lang-test-plugin",
+ "cairo-lang-test-runner",
  "cairo-lang-utils",
  "chrono",
  "reqwest",
  "serde",
  "serde_json",
+ "starknet-types-core",
  "tokio",
  "tower",
  "tower-http",

@@ -204,3 +204,62 @@ fn run_single_test(
         }),
     ))
 }
+
+#[cfg(test)]
+mod test_runner {
+    use super::*;
+
+    pub fn run_cairo_code_string_output(code: String) -> String {
+        match run_cairo_code(code) {
+            Ok(output) => output,
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_cairo_code_success1() {
+        let code = r#"
+fn main(){// this is some Cairo code
+}"#;
+        let output = run_cairo_code_string_output(code.to_string());
+        assert!(output.contains("Run completed successfully, returning"));
+    }
+
+    #[test]
+    fn test_cairo_code_success() {
+        let code = r#"
+            fn main() -> felt252 {
+                return 42;
+            }
+        "#;
+        let output = run_cairo_code_string_output(code.to_string());
+        assert!(output.contains("Run completed successfully, returning"));
+    }
+
+    #[test]
+    fn test_cairo_code_compile_error() {
+        let code = r#"
+            fn main() -> felt252 {
+                4 + 5;
+            }
+        "#;
+        let output = match run_cairo_code(code.to_string()) {
+            Ok(_) => panic!("output should have error"),
+            Err(e) => format!("{}", e),
+        };
+        println!("\n\n{}\n\n", output);
+        assert!(output.contains("Unexpected return type."));
+    }
+
+    #[test]
+    fn test_cairo_code_panic() {
+        let code = r#"
+            fn main() {
+                panic!("good_error_has_occurred");
+            }
+        "#;
+        let output = run_cairo_code_string_output(code.to_string());
+        assert!(output.contains("Run panicked with"));
+        assert!(output.contains("good_error_has_occurred"));
+    }
+}
