@@ -15,7 +15,10 @@ use cairo_lang_sierra_generator::{
     program_generator::SierraProgramWithDebug,
     replace_ids::{DebugReplacer, SierraIdReplacer},
 };
-use cairo_lang_starknet::contract::{find_contracts, get_contracts_info};
+use cairo_lang_starknet::{
+    contract::{find_contracts, get_contracts_info},
+    starknet_plugin_suite,
+};
 use cairo_lang_utils::Upcast;
 use std::{collections::BTreeMap, sync::Arc};
 
@@ -41,6 +44,8 @@ pub fn run_cairo_code(code: String) -> anyhow::Result<String> {
     let mut output = "".into();
     let mut db_builder = RootDatabase::builder();
     db_builder.detect_corelib();
+    db_builder.with_default_plugin_suite(starknet_plugin_suite());
+
     let db = &mut db_builder.build()?;
 
     let main_crate_id = setup_input_string_project(db, code).unwrap();

@@ -4,7 +4,7 @@ use cairo_lang_sierra::program::Program;
 use cairo_lang_test_plugin::{
     compile_test_prepared_db,
     test_config::{PanicExpectation, TestExpectation},
-    TestConfig, TestsCompilationConfig,
+    test_plugin_suite, TestConfig, TestsCompilationConfig,
 };
 use cairo_lang_test_runner::{RunProfilerConfig, TestRunConfig};
 
@@ -12,7 +12,7 @@ use std::sync::Mutex;
 
 use anyhow::{Context, Result};
 use cairo_lang_runner::ProfilingInfoCollectionConfig;
-use cairo_lang_starknet::contract::ContractInfo;
+use cairo_lang_starknet::{contract::ContractInfo, starknet_plugin_suite};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 // use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use starknet_types_core::felt::Felt as Felt252;
@@ -44,7 +44,10 @@ struct TestResult {
 pub fn run_cairo_tests(code: String) -> anyhow::Result<Option<TestsSummary>> {
     let mut db_builder = RootDatabase::builder();
     db_builder.detect_corelib();
+    db_builder.with_default_plugin_suite(test_plugin_suite());
+    db_builder.with_default_plugin_suite(starknet_plugin_suite());
     let db = &mut db_builder.build()?;
+
     let crate_id = setup_input_string_project(db, code)?;
 
     let compiled = compile_test_prepared_db(
