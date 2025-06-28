@@ -17,7 +17,7 @@ use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 // use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use starknet_types_core::felt::Felt as Felt252;
 
-use crate::cairo::runner::setup_input_string_project;
+use crate::runner::setup_input_string_project;
 
 #[derive(Debug)]
 pub struct TestsSummary {

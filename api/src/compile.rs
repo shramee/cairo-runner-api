@@ -1,5 +1,5 @@
-use crate::cairo::runner::run_cairo_code;
 use axum::{extract::Json as ExtractJson, http::StatusCode, response::Json};
+use cairo_runners::runner::run_cairo_code;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]

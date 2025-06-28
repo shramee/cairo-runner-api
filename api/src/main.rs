@@ -1,13 +1,6 @@
-pub mod cairo {
-    pub mod runner;
-    pub mod test_runner;
-}
-
-mod entrypoints {
-    pub mod compile;
-    pub mod health;
-    pub mod test;
-}
+pub mod compile;
+pub mod health;
+pub mod test;
 
 use axum::{
     routing::{get, post},
@@ -17,7 +10,7 @@ use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
-use crate::entrypoints::{compile::run_handler, health::health_handler, test::test_handler};
+use {compile::run_handler, health::health_handler, test::test_handler};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
