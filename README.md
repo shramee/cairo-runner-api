@@ -57,3 +57,89 @@ The authenticated IAM role need user needs permissions beyond PowerUser, tested 
 ```bash
 cargo lambda deploy --bin cairo-runner-lambda
 ```
+
+## Cairo runner functions usage
+
+#### Available functions and types
+```rust
+pub struct TestsSummary {
+    passed: Vec<String>,
+    failed: Vec<String>,
+    failed_run_results: Vec<RunResultValue>,
+    notes: String,
+}
+
+pub fn run_cairo_tests(code: String) -> anyhow::Result<TestsSummary>;
+pub fn run_cairo_code(code: String) -> anyhow::Result<String>;
+```
+
+#### Usage
+
+```rust
+use cairo_runners::{main_runner::run_cairo_code, test_runner::run_cairo_tests};
+
+// Main runner
+
+let code = r#"
+fn main() -> u8 {
+  4
+}"#;
+
+let output = run_cairo_code_string_output(code.to_string());
+
+
+// Tests runner
+
+let code = r#"
+#[test]
+fn test_pass() {
+  asserts(true, 'should pass');
+}
+#[test]
+fn test_fail() {
+  assert(false, 'should fail');
+}"#;
+
+let output = run_cairo_code_string_output(code.to_string());
+
+```
+
+## API Usage
+
+#### Lambda URL Example
+
+```bash
+curl --location 'https://<lambda-url>' \
+--header 'Content-Type: application/json' \
+--data '{
+    "code": "fn main() -> u128 {1}",
+    "test": false
+}'
+```
+
+```bash
+curl --location 'https://<lambda-url>' \
+--header 'Content-Type: application/json' \
+--data '{
+    "code": "#[test]fn test_pass() {asserts(true, \'should pass\');}#[test]fn test_fail() {assert(false, \'should fail\');}",
+    "test": true
+}'
+```
+
+#### HTTP (Axum) Example
+
+```bash
+curl --location 'https://<api-url>/test' \
+--header 'Content-Type: application/json' \
+--data '{
+    "code": "#[test]fn test_pass() {asserts(true, \'should pass\');}#[test]fn test_fail() {assert(false, \'should fail\');}"
+}'
+```
+
+```bash
+curl --location 'https://<api-url>/run' \
+--header 'Content-Type: application/json' \
+--data '{
+    "code": "fn main() -> u128 {1}"
+}'
+```
