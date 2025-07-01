@@ -219,7 +219,7 @@ fn run_single_test(
             },
             gas_usage: result
                 .gas_counter
-                .map(|f| f.to_bigint().to_u64_digits().1[0] as i64),
+                .map(|f| *f.to_bigint().to_u64_digits().1.first().unwrap_or(&0) as i64),
             // used_resources: result.used_resources,
             // profiling_info: result.profiling_info,
         }),
