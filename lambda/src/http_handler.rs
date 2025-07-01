@@ -1,3 +1,5 @@
+use std::panic;
+
 use cairo_runner_types::CairoRunRequest;
 use cairo_runners::{main_runner::run_cairo_code, test_runner::run_cairo_tests};
 use lambda_http::{Body, Error, Request, Response};
@@ -35,7 +37,16 @@ pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, E
 
     let result = match request_data.test {
         // run tests if the `test` query parameter is present
-        Some(_) => run_cairo_tests_get_notes(code.to_string()),
+        Some(should_test) => match should_test {
+            true => {
+                let result = panic::catch_unwind(|| run_cairo_tests_get_notes(code.to_string()));
+                match result {
+                    Ok(notes) => notes,
+                    Err(e) => format!("Panic occurred: {:?}", e),
+                }
+            }
+            false => run_cairo_main_get_notes(code.to_string()),
+        },
         // otherwise run the main function
         None => run_cairo_main_get_notes(code.to_string()),
     };
@@ -86,6 +97,30 @@ mod tests {
 
         let body_bytes = response.body().to_vec();
         let body_string = String::from_utf8(body_bytes).unwrap();
+
+        assert!(body_string.contains("Run completed successfully, returning"));
+    }
+
+    #[tokio::test]
+    async fn test_test_runner_with_main() {
+        let code = "fn main() -> felt252 {0x25}";
+
+        let request = Request::new(
+            json!({
+                "code": code,
+                "test": true,
+            })
+            .to_string()
+            .into(),
+        );
+
+        let response = function_handler(request).await.unwrap();
+        assert_eq!(response.status(), 200);
+
+        let body_bytes = response.body().to_vec();
+        let body_string = String::from_utf8(body_bytes).unwrap();
+
+        println!("Response body: {}", body_string);
 
         assert!(body_string.contains("Run completed successfully, returning"));
     }
