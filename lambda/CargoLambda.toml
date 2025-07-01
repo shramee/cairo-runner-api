@@ -1,0 +1,6 @@
+[build]
+output_format = "zip"
+include=["./corelib"]
+
+[deploy]
+include=["./corelib"]

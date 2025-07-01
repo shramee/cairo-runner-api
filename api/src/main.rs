@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
         .parse::<u16>()?;
 
     let addr = format!("0.0.0.0:{}", port);
-    info!("Server listening on {}", addr);
+    println!("Server listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
