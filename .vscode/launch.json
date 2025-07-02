@@ -1,0 +1,155 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in library 'cairo_runner_types'",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--lib",
+					"--package=cairo-runner-types"
+				],
+				"filter": {
+					"name": "cairo_runner_types",
+					"kind": "lib"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in library 'cairo_runners'",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--lib",
+					"--package=cairo-runners"
+				],
+				"filter": {
+					"name": "cairo_runners",
+					"kind": "lib"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in library 'cairo_runners::starknet'",
+			"cargo": {
+				"args": [
+					"test",
+					"starknet",
+					"--no-run",
+					"--lib",
+					"--package=cairo-runners"
+				],
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in library 'cairo_runner_api'",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--lib",
+					"--package=cairo-runner-api"
+				],
+				"filter": {
+					"name": "cairo_runner_api",
+					"kind": "lib"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug executable 'cairo-runner-api'",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=cairo-runner-api",
+					"--package=cairo-runner-api"
+				],
+				"filter": {
+					"name": "cairo-runner-api",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in executable 'cairo-runner-api'",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--bin=cairo-runner-api",
+					"--package=cairo-runner-api"
+				],
+				"filter": {
+					"name": "cairo-runner-api",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug executable 'cairo-runner-lambda'",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=cairo-runner-lambda",
+					"--package=cairo-runner-lambda"
+				],
+				"filter": {
+					"name": "cairo-runner-lambda",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in executable 'cairo-runner-lambda'",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--bin=cairo-runner-lambda",
+					"--package=cairo-runner-lambda"
+				],
+				"filter": {
+					"name": "cairo-runner-lambda",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		}
+	]
+}
