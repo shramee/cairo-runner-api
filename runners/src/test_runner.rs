@@ -1,6 +1,8 @@
 use cairo_lang_compiler::{db::RootDatabase, diagnostics::DiagnosticsReporter};
+use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_runner::{RunResultValue, SierraCasmRunner};
 use cairo_lang_sierra::program::Program;
+use cairo_lang_sierra_to_casm::metadata::MetadataComputationConfig;
 use cairo_lang_test_plugin::{
     compile_test_prepared_db,
     test_config::{PanicExpectation, TestExpectation},
@@ -60,8 +62,10 @@ struct TestResult {
 }
 
 pub fn run_cairo_tests(code: String) -> anyhow::Result<TestsSummary> {
+    let cfg = CfgSet::from_iter([Cfg::name("test"), Cfg::kv("target", "test")]);
     let mut db_builder = RootDatabase::builder();
     db_builder.detect_corelib();
+    db_builder.with_cfg(cfg);
     db_builder.with_default_plugin_suite(test_plugin_suite());
     db_builder.with_default_plugin_suite(starknet_plugin_suite());
     let db = &mut db_builder.build()?;
@@ -156,7 +160,7 @@ pub fn run_tests(
 ) -> Result<TestsSummary> {
     let runner = SierraCasmRunner::new(
         sierra_program.clone(),
-        None,
+        Some(MetadataComputationConfig::default()),
         contracts_info,
         match config.run_profiler {
             RunProfilerConfig::None => None,
@@ -338,6 +342,46 @@ fn main(){// this is some Cairo code
                 assert!(output.notes.contains("test lib::test_should_panic ... ok"));
             }
             Err(e) => panic!("Error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_starknet() {
+        let code = r#"#[starknet::interface]
+trait IJoesContract<TContractState> {
+    fn get_owner(self: @TContractState) -> felt252;
+}
+
+#[starknet::contract]
+mod JoesContract {
+    #[storage]struct Storage {}
+    #[abi(embed_v0)]
+    impl IJoesContractImpl of super::IJoesContract<ContractState> {
+        fn get_owner(self: @ContractState) -> felt252 { 'Joe' }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{JoesContract, IJoesContractDispatcher, IJoesContractDispatcherTrait};
+    #[test]
+    #[available_gas(2000000000)]
+    fn test_contract_view() {
+        let (address0, _) = starknet::syscalls::deploy_syscall(
+            JoesContract::TEST_CLASS_HASH.try_into().unwrap(), 0, [].span(), false
+        ).unwrap();
+        let contract = IJoesContractDispatcher { contract_address: address0 };
+        assert('Joe' == contract.get_owner(), 'Joe should be the owner.');
+    }
+}"#;
+        match run_cairo_tests(code.to_string()) {
+            Ok(res) => {
+                assert!(res.passed.len() == 1);
+                assert!(res.failed.is_empty());
+                assert!(res.failed_run_results.is_empty());
+                assert!(res.notes.contains("test_contract_view ... ok"));
+            }
+            Err(e) => println!("\n\nError: ```{}```\n\n", e),
         }
     }
 }
